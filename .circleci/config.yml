@@ -9,6 +9,12 @@ workflows:
             branches:
               only: 
               - main  # Run CI only on the main branch
+      - deploy:
+          filters:
+            branches:
+              only: main
+          requires: 
+            - build # means if our build job does not pass our deploy job will not be run
 
 jobs:
   build:  # what happens in our build job
@@ -32,3 +38,14 @@ jobs:
           key: dependency-cache-{{ checksum "package-lock.json" }}
           paths:
             - ./node_modules
+  deploy:
+    docker:
+      - image: circleci/node:10.16.3
+    steps:
+       - run:
+          name: Deploy Application
+          command: |
+              ssh -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_PUBLIC_DNS "
+              rm -rf SimpleApplication/;
+              git clone https://github.com/DevOpsSecProjectPart1SimpleApplication/SimpleApplication.git;
+              source SimpleApplication/deploy.sh"
